@@ -301,8 +301,6 @@ class JdTdudfp:
             browser = await launch(userDataDir=".user_data", autoClose=True,
                                    args=['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox'])
             page = await browser.newPage()
-            # 有些页面打开慢，这里设置时间长一点，360秒
-            page.setDefaultNavigationTimeout(360 * 1000)
             await page.setViewport({"width": 1920, "height": 1080})
             await page.setUserAgent(self.user_agent)
             for key, value in self.cookies.items():
@@ -313,46 +311,17 @@ class JdTdudfp:
 
             nick_name = await page.querySelectorEval(".nickname", "(element) => element.textContent")
             if not nick_name:
+                logger.info("昵称获取失败！" )
                 # 如果未获取到用户昵称，说明可能登陆失败，放弃获取 _JdTdudfp
                 return jd_tdudfp
-
-            await page.waitFor(".cate_menu_lk")
-            # .cate_menu_lk是一个a标签，理论上可以直接触发click事件
-            # 点击事件会打开一个新的tab页，但是browser.pages()无法获取新打开的tab页，导致无法引用新打开的page对象
-            # 所以获取href，使用goto跳转的方式
-            # 下面类似goto写法都是这个原因
-            a_href = await page.querySelectorAllEval(".cate_menu_lk", "(elements) => elements[0].href")
+            # 直接进入购物车找到商品经行结算
+            a_href = 'https://cart.jd.com/cart_index/'
             await page.goto(a_href)
-            await page.waitFor(".goods_item_link")
-            logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            a_href = await page.querySelectorAllEval(".goods_item_link", "(elements) => elements[{}].href".format(str(random.randint(1,20))))
-            await page.goto(a_href)
-            await page.waitFor("#InitCartUrl")
-            logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            a_href = await page.querySelectorAllEval("#InitCartUrl", "(elements) => elements[0].href")
-            await page.goto(a_href)
-            await page.waitFor(".btn-addtocart")
-            logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            a_href = await page.querySelectorAllEval(".btn-addtocart", "(elements) => elements[0].href")
-            await page.goto(a_href)
-            await page.waitFor(".common-submit-btn")
-            logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            
-            await page.click(".common-submit-btn")
-            await page.waitFor("#sumPayPriceId")
-            logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-
-            for _ in range(30):
-                jd_tdudfp = await page.evaluate("() => {try{return _JdTdudfp}catch(e){}}")
-                if jd_tdudfp and len(jd_tdudfp) > 0:
-                    logger.info("jd_tdudfp：【%s】" % jd_tdudfp)
-                    break
-                else:
-                    await asyncio.sleep(1)
-
+            jd_tdudfp = await page.evaluate("() => {try{return {eid:_JdEid,fp:_JdJrTdRiskFpInfo}}catch(e){}}")
             await page.close()
         except Exception as e:
             logger.info("自动获取JdTdudfp发生异常，将从配置文件读取！")
+        logger.info("jd_tdudfp ：【%s】" % jd_tdudfp)
         return jd_tdudfp
 
 
@@ -556,7 +525,7 @@ class JdSeckill(object):
             'Host': 'itemko.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(self.sku_id),
         }
-        while True:
+        while self.running_flag:
             resp = self.session.get(url=url, headers=headers, params=payload)
             resp_json = parse_json(resp.text)
             if resp_json.get('url'):
