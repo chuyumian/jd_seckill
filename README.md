@@ -89,7 +89,8 @@
 (1)`eid`和`fp`找个普通商品随便下单,然后抓包就能看到,这两个值可以填固定的 
 > 现在已经支持自动获取，因为添加了一个新的三方库，需要在程序运行之前再执行一次安装第三方库的命令  
 > 如果想手动获取，随便找一个商品下单，然后进入结算页面，打开浏览器的调试窗口，切换到控制台Tab页，在控制台中输入变量`_JdTdudfp`，即可从输出的Json中获取`eid`和`fp`。
-> 现在已经可以自动获取代码在`jd_seckill/jd_spider_requests.py` ，通过进入购物车控制台中输入变量 `{eid:_JdEid,fp:_JdJrTdRiskFpInfo}` 即可从输出`eid`和`fp`
+> 现在已经可以自动获取代码在`jd_seckill/jd_spider_requests.py` ，通过进入购物车控制台中输入变量 `{eid:_JdEid,fp:_JdJrTdRiskFpInfo}` 即可从输出`eid`和`fp`。
+
 (2)`sku_id`,`default_user_agent` 
 > `sku_id`已经按照茅台的填好。
 > `cookies_string` 现在已经不需要填写了
