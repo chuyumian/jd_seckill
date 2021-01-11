@@ -550,6 +550,9 @@ class JdSeckill(object):
         logger.info('商品名称:{}'.format(self.get_sku_title()))
         self.timers.start()
         self.seckill_url[self.sku_id] = self.get_seckill_url()
+        if not self.running_flag:
+            # 还未到时间/或已经结束
+            return False
         logger.info('访问商品的抢购连接...')
         headers = {
             'User-Agent': self.user_agent,
