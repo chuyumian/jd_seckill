@@ -17,7 +17,8 @@ class Timer(object):
         self.buy_time = datetime.strptime(global_config.getRaw('config', 'buy_time'), "%Y-%m-%d %H:%M:%S.%f")
         self.buy_time_ms = int(time.mktime(self.buy_time.timetuple()) * 1000.0 + self.buy_time.microsecond / 1000)
         self.sleep_interval = sleep_interval
-
+        self.reserve_time = datetime.strptime(global_config.getRaw('config', 'reserve_time'), "%Y-%m-%d %H:%M:%S.%f")
+        self.reserve_time_ms = int(time.mktime(self.reserve_time.timetuple()) * 1000.0 + self.reserve_time.microsecond / 1000)
         self.diff_time = self.local_jd_time_diff()
 
     def jd_time(self):
@@ -46,15 +47,26 @@ class Timer(object):
 
     def start(self):
         logger.info('正在等待到达设定时间:{}，检测本地时间与京东服务器时间误差为【{}】毫秒'.format(self.buy_time, self.diff_time))
+        self.time_start(self.buy_time_ms)
+
+    def buytime_get(self):
+        """获取开始抢购的时间"""
+        return self.buy_time
+
+    def reserve_start(self):
+        logger.info('正在等待到达设定下一次预约时间:{}，检测本地时间与京东服务器时间误差为【{}】毫秒'.format(self.reserve_time, self.diff_time))
+        self.time_start(self.reserve_time_ms)
+
+    def time_start(self, time_ms=0):
         while True:
             # 本地时间减去与京东的时间差，能够将时间误差提升到0.1秒附近
             # 具体精度依赖获取京东服务器时间的网络时间损耗
-            if self.local_time() - self.diff_time >= self.buy_time_ms:
+            if self.local_time() - self.diff_time >= time_ms:
                 logger.info('时间到达，开始执行……')
                 break
             else:
                 time.sleep(self.sleep_interval)
 
-    def buytime_get(self):
-        """获取开始抢购的时间"""
-        return self.buy_time
+    def make_reserve_time(self):
+        """获取预约时间"""
+        return self.reserve_time

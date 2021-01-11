@@ -402,6 +402,8 @@ class JdSeckill(object):
         with ProcessPoolExecutor(work_count) as pool:
             for i in range(work_count):
                 pool.submit(self.seckill)
+        self.timers.reserve_start()
+        self.reserve()
 
     def _reserve(self):
         """
